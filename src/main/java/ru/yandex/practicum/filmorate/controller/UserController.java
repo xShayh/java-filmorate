@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.controller;
 
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
@@ -22,7 +23,7 @@ public class UserController {
     }
 
     @PostMapping
-    public User addUser(@RequestBody User user) {
+    public User addUser(@Valid @RequestBody User user) {
         log.info("Добавление пользователя: {}", user);
         validateUser(user);
         user.setId(getNextId());
@@ -35,7 +36,7 @@ public class UserController {
     }
 
     @PutMapping
-    public User updateUser(@RequestBody User updatedUser) {
+    public User updateUser(@Valid @RequestBody User updatedUser) {
         log.info("Обновление пользователя с ID {}", updatedUser.getId());
         if (!users.containsKey(updatedUser.getId())) {
             log.error("Ошибка обновления: пользователь с ID {} не найден", updatedUser.getId());
@@ -51,13 +52,13 @@ public class UserController {
     }
 
     private void validateUser(User user) {
-        if (user.getEmail() == null || user.getEmail().isBlank() || !user.getEmail().contains("@")) {
-            log.error("Ошибка валидации: email пустой или не содержит символ '@', указанный email: {}", user.getEmail());
-            throw new ValidationException("Электронная почта не может быть пустой и должна содержать символ '@'");
+        if (!user.getEmail().contains("@")) {
+            log.error("Ошибка валидации: email не содержит символ '@', указанный email: {}", user.getEmail());
+            throw new ValidationException("Электронная почта должна содержать символ '@'");
         }
-        if (user.getLogin() == null || user.getLogin().isBlank() || user.getLogin().contains(" ")) {
-            log.error("Ошибка валидации: логин пустой или содержит пробелы, указанный логин: {}", user.getLogin());
-            throw new ValidationException("Логин не может быть пустым и содержать пробелы");
+        if (user.getLogin().contains(" ")) {
+            log.error("Ошибка валидации: логин содержит пробелы, указанный логин: {}", user.getLogin());
+            throw new ValidationException("Логин не может содержать пробелы");
         }
         if (user.getBirthday() != null && user.getBirthday().isAfter(LocalDate.now())) {
             log.error("Ошибка валидации: дата рождения в будущем, указанная дата рождения: {}", user.getBirthday());

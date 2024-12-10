@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.controller;
 
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
@@ -22,7 +23,7 @@ public class FilmController {
     }
 
     @PostMapping
-    public Film addFilm(@RequestBody Film film) {
+    public Film addFilm(@Valid @RequestBody Film film) {
         log.info("Добавление фильма: {}", film);
         validateFilm(film);
         film.setId(getNextId());
@@ -32,7 +33,7 @@ public class FilmController {
     }
 
     @PutMapping
-    public Film updateFilm(@RequestBody Film updatedFilm) {
+    public Film updateFilm(@Valid @RequestBody Film updatedFilm) {
         log.info("Обновление фильма с ID {}", updatedFilm.getId());
         if (!films.containsKey(updatedFilm.getId())) {
             log.error("Ошибка обновления фильма: фильм с ID {} не найден", updatedFilm.getId());
@@ -45,25 +46,10 @@ public class FilmController {
     }
 
     private void validateFilm(Film film) {
-        if (film.getName() == null || film.getName().isBlank()) {
-            log.error("Ошибка валидации: название фильма пустое");
-            throw new ValidationException("Название фильма не может быть пустым");
-        }
-        if (film.getDescription() != null && film.getDescription().length() > 200) {
-            log.error("Ошибка валидации: описание фильма превышает 200 символов, указанная длина: {}",
-                    film.getDescription().length());
-            throw new ValidationException("Описание фильма не может превышать 200 символов");
-        }
         if (film.getReleaseDate() != null && film.getReleaseDate().isBefore(LocalDate.of(1895, 12, 28))) {
             log.error("Ошибка валидации: дата релиза раньше 28 декабря 1895 года, указанная дата: {}",
                     film.getReleaseDate());
             throw new ValidationException("Дата релиза не может быть раньше 28 декабря 1895 года");
-        }
-        if (film.getDuration() == 0 || !(film.getDuration() > 0)) {
-            log.error("Ошибка валидации: отрицательная или нулевая продолжительность фильма, " +
-                            "указанная продолжительность: {}",
-                    film.getDuration());
-            throw new ValidationException("Продолжительность фильма должна быть положительным числом");
         }
         log.info("Фильм с ID {} успешно прошёл валидацию", film.getId());
     }

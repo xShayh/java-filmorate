@@ -22,7 +22,7 @@ class UserControllerTest {
 
         ValidationException exception = assertThrows(ValidationException.class, () ->
                 userController.addUser(invalidUser));
-        assert exception.getMessage().equals("Электронная почта не может быть пустой и должна содержать символ '@'");
+        assert exception.getMessage().equals("Электронная почта должна содержать символ '@'");
     }
 
     @Test
@@ -34,7 +34,7 @@ class UserControllerTest {
 
         ValidationException exception = assertThrows(ValidationException.class, () ->
                 userController.addUser(invalidUser));
-        assert exception.getMessage().equals("Логин не может быть пустым и содержать пробелы");
+        assert exception.getMessage().equals("Логин не может содержать пробелы");
     }
 
     @Test
