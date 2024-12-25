@@ -1,65 +1,72 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.exception.IncorrectArgumentException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.service.FilmService;
 
-import java.time.LocalDate;
 import java.util.*;
 
 @Slf4j
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/films")
 public class FilmController {
-    private final Map<Long, Film> films = new HashMap<>();
+    private final FilmService filmService;
 
     @GetMapping
-    public Collection<Film> getAllFilms() {
-        log.info("Запрос на получение всех фильмов");
-        return films.values();
+    public Collection<Film> getAll() {
+        return filmService.getAll();
+    }
+
+    @GetMapping("/{id}")
+    public Film getById(@PathVariable long id) {
+        return filmService.get(id);
     }
 
     @PostMapping
-    public Film addFilm(@Valid @RequestBody Film film) {
-        log.info("Добавление фильма: {}", film);
-        validateFilm(film);
-        film.setId(getNextId());
-        films.put(film.getId(), film);
-        log.info("Фильм добавлен с ID: {}", film.getId());
+    public Film add(@Valid @RequestBody Film film) {
+        filmService.add(film);
+        log.info("Фильм с ID {} добавлен.", film.getId());
         return film;
     }
 
+    @DeleteMapping("/{id}")
+    public void deleteById(@PathVariable long id) {
+        filmService.delete(id);
+        log.info("Фильм с ID {} удалён.", id);
+    }
+
     @PutMapping
-    public Film updateFilm(@Valid @RequestBody Film updatedFilm) {
-        log.info("Обновление фильма с ID {}", updatedFilm.getId());
-        if (!films.containsKey(updatedFilm.getId())) {
-            log.error("Ошибка обновления фильма: фильм с ID {} не найден", updatedFilm.getId());
-            throw new NotFoundException("Фильм с ID " + updatedFilm.getId() + " не найден");
-        }
-        validateFilm(updatedFilm);
-        films.put(updatedFilm.getId(), updatedFilm);
-        log.info("Фильм с ID {} обновлён", updatedFilm.getId());
+    public Film update(@Valid @RequestBody Film updatedFilm) {
+        filmService.update(updatedFilm);
+        log.info("Фильм с ID {} обновлён.", updatedFilm.getId());
         return updatedFilm;
     }
 
-    private void validateFilm(Film film) {
-        if (film.getReleaseDate() != null && film.getReleaseDate().isBefore(LocalDate.of(1895, 12, 28))) {
-            log.error("Ошибка валидации: дата релиза раньше 28 декабря 1895 года, указанная дата: {}",
-                    film.getReleaseDate());
-            throw new ValidationException("Дата релиза не может быть раньше 28 декабря 1895 года");
-        }
-        log.info("Фильм с ID {} успешно прошёл валидацию", film.getId());
+    @PutMapping("/{id}/like/{userId}")
+    public Film addLike(@PathVariable long id, @PathVariable long userId) {
+        filmService.addLike(id, userId);
+        log.info("Пользователь с ID {} поставил лайк фильму с ID {}.", userId, id);
+        return filmService.get(id);
     }
 
-    private long getNextId() {
-        long currentMaxId = films.keySet()
-                .stream()
-                .mapToLong(id -> id)
-                .max()
-                .orElse(0);
-        return ++currentMaxId;
+    @DeleteMapping("/{id}/like/{userId}")
+    public Film deleteLike(@PathVariable long id, @PathVariable long userId) {
+        filmService.deleteLike(id, userId);
+        log.info("Пользователь с ID {} убрал лайк фильму с ID {}.", userId, id);
+        return filmService.get(id);
     }
+
+    @GetMapping("/popular")
+    public List<Film> getPopular(@RequestParam(defaultValue = "10") Long count) {
+        if (count <= 0) {
+            throw new IncorrectArgumentException("Значение count должно быть больше нуля.");
+        }
+        return filmService.getPopular(count);
+    }
+
 }
