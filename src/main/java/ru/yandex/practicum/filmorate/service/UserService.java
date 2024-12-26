@@ -4,7 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.storage.InMemoryUserStorage;
+import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.util.Collection;
 
@@ -12,7 +12,7 @@ import java.util.Collection;
 @Slf4j
 @AllArgsConstructor
 public class UserService {
-    InMemoryUserStorage userStorage;
+    private UserStorage userStorage;
 
     public Collection<User> getAll() {
         return userStorage.getAll();

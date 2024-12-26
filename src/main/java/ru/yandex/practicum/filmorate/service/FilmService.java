@@ -5,8 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.storage.InMemoryFilmStorage;
-import ru.yandex.practicum.filmorate.storage.InMemoryUserStorage;
+import ru.yandex.practicum.filmorate.storage.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.util.Collection;
 import java.util.List;
@@ -15,9 +15,8 @@ import java.util.List;
 @Slf4j
 @AllArgsConstructor
 public class FilmService {
-
-    InMemoryFilmStorage filmStorage;
-    InMemoryUserStorage userStorage;
+    private FilmStorage filmStorage;
+    private UserStorage userStorage;
 
     public Collection<Film> getAll() {
         return filmStorage.getAll();
@@ -40,7 +39,9 @@ public class FilmService {
     }
 
     public void addLike(Long id, Long userId) {
-        if (userStorage.getUsers().containsKey(userId)) {
+        boolean userExists = userStorage.getAll().stream()
+                .anyMatch(user -> user.getId().equals(userId));
+        if (userExists) {
             filmStorage.addLike(id, userId);
         } else {
             throw new NotFoundException("Указанного пользователя не существует.");
@@ -48,7 +49,9 @@ public class FilmService {
     }
 
     public void deleteLike(Long id, Long userId) {
-        if (userStorage.getUsers().containsKey(userId)) {
+        boolean userExists = userStorage.getAll().stream()
+                .anyMatch(user -> user.getId().equals(userId));
+        if (userExists) {
             filmStorage.deleteLike(id, userId);
         } else {
             throw new NotFoundException("Указанного пользователя не существует.");
@@ -58,5 +61,4 @@ public class FilmService {
     public List<Film> getPopular(Long count) {
         return filmStorage.getPopular(count);
     }
-
 }
