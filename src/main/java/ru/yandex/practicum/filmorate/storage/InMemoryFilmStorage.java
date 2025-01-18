@@ -1,4 +1,4 @@
-package ru.yandex.practicum.filmorate.storage;
+/*package ru.yandex.practicum.filmorate.storage;
 
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
@@ -13,7 +13,7 @@ public class InMemoryFilmStorage implements FilmStorage {
     private final Map<Long, Film> films = new HashMap<>();
 
     @Override
-    public void add(Film film) {
+    public Film add(Film film) {
         validate(film);
         film.setId(getNextId());
         films.put(film.getId(), film);
@@ -35,7 +35,7 @@ public class InMemoryFilmStorage implements FilmStorage {
     }
 
     @Override
-    public void update(Film newFilm) {
+    public Film update(Film newFilm) {
         if (!films.containsKey(newFilm.getId())) {
             throw new NotFoundException("Указанного фильма не существует.");
         }
@@ -54,7 +54,7 @@ public class InMemoryFilmStorage implements FilmStorage {
     }
 
     @Override
-    public void delete(long id) {
+    public boolean delete(long id) {
         if (!films.containsKey(id)) {
             throw new NotFoundException("Указанного фильма не существует.");
         }
@@ -93,3 +93,4 @@ public class InMemoryFilmStorage implements FilmStorage {
         return sortedFilms.stream().limit(count).toList();
     }
 }
+ */

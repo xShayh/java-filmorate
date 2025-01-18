@@ -1,3 +1,4 @@
+/*
 package ru.yandex.practicum.filmorate.storage;
 
 import jakarta.validation.Valid;
@@ -133,3 +134,4 @@ public class InMemoryUserStorage implements UserStorage {
         return commonFriendsList;
     }
 }
+ */

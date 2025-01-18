@@ -1,52 +1,68 @@
 package ru.yandex.practicum.filmorate.service;
 
 import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.dal.UserDbStorage;
+import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.util.Collection;
+import java.util.Collections;
 
 @Service
 @Slf4j
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class UserService {
-    private UserStorage userStorage;
+    private final UserDbStorage userDbStorage;
 
     public Collection<User> getAll() {
-        return userStorage.getAll();
+        return userDbStorage.getAll();
     }
 
-    public void add(User user) {
-        userStorage.add(user);
+    public User add(User user) {
+        if (user.getEmail().isEmpty()) {
+            throw new ConditionsNotMetException("Имейл должен быть указан");
+        }
+        userDbStorage.add(user);
+        log.info("Добавлен новый пользователь, id={}", user.getId());
+
+        return user;
     }
 
-    public void update(User newUser) {
-        userStorage.update(newUser);
+    public User update(User newUser) {
+        userDbStorage.update(newUser);
+        return newUser;
     }
 
     public User get(long id) {
-        return userStorage.get(id);
+        return userDbStorage.get(id);
     }
 
     public void delete(long id) {
-        userStorage.delete(id);
+        userDbStorage.delete(id);
     }
 
     public void addFriend(Long id, Long friendId) {
-        userStorage.addFriend(id, friendId);
+        userDbStorage.addFriend(id, friendId);
     }
 
     public void deleteFromFriends(Long id, Long friendId) {
-        userStorage.deleteFromFriends(id, friendId);
+        userDbStorage.deleteFromFriends(id, friendId);
     }
 
     public Collection<User> getAllFriends(Long id) {
-        return userStorage.getAllFriends(id);
+        try {
+            return userDbStorage.getAllFriends(id);
+        } catch (EmptyResultDataAccessException e) {
+            return Collections.emptyList();
+        }
     }
 
     public Collection<User> getCommonFriends(Long id, Long friendId) {
-        return userStorage.getCommonFriends(id, friendId);
+        return userDbStorage.getCommonFriends(id, friendId);
     }
 }
