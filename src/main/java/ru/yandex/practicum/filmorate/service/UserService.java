@@ -1,6 +1,5 @@
 package ru.yandex.practicum.filmorate.service;
 
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -8,7 +7,6 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dal.UserDbStorage;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.util.Collection;
 import java.util.Collections;

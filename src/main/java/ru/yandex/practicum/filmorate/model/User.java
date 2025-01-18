@@ -7,8 +7,6 @@ import lombok.NoArgsConstructor;
 import lombok.NonNull;
 
 import java.sql.Date;
-import java.time.LocalDate;
-import java.util.HashSet;
 import java.util.Set;
 
 @Data
