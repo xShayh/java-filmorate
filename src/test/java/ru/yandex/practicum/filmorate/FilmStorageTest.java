@@ -76,6 +76,8 @@ class FilmStorageTest {
             filmStorage.get(addedFilm.getId());
             fail("Ожидалось исключение NotFoundException");
         } catch (NotFoundException e) {
+            assertThat(e).isInstanceOf(NotFoundException.class);
+            assertThat(e.getMessage()).contains("Такого фильма нет");
         }
     }
 
