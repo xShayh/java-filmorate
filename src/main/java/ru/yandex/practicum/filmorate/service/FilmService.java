@@ -15,7 +15,7 @@ import java.util.List;
 @Slf4j
 @AllArgsConstructor
 public class FilmService {
-    FilmDbStorage filmDbStorage;
+    private FilmDbStorage filmDbStorage;
 
     public Collection<Film> getAll() {
         return filmDbStorage.getAll();
@@ -34,7 +34,11 @@ public class FilmService {
     }
 
     public Film get(long id) {
-        return filmDbStorage.get(id);
+        Film film = filmDbStorage.get(id);
+        if (film == null) {
+            throw new NotFoundException("Фильм с ID " + id + " не найден.");
+        }
+        return film;
     }
 
     public void delete(long id) {

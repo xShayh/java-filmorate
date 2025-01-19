@@ -12,7 +12,7 @@ import java.util.Collection;
 @Slf4j
 @AllArgsConstructor
 public class GenreService {
-    GenreDbStorage genreDbStorage;
+    private GenreDbStorage genreDbStorage;
 
     public Genre getGenre(long id) {
         return genreDbStorage.getGenre(id);

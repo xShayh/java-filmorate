@@ -12,7 +12,7 @@ import java.util.Collection;
 @Slf4j
 @AllArgsConstructor
 public class MpaService {
-    MpaDbStorage mpaDbStorage;
+    private MpaDbStorage mpaDbStorage;
 
     public Mpa getMpaById(long id) {
         return mpaDbStorage.get(id);

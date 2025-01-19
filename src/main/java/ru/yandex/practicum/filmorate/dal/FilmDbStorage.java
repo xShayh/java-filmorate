@@ -2,14 +2,11 @@ package ru.yandex.practicum.filmorate.dal;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.dal.mapper.FilmRowMapper;
-import ru.yandex.practicum.filmorate.dal.mapper.GenreRowMapper;
-import ru.yandex.practicum.filmorate.dal.mapper.MpaRowMapper;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
@@ -29,8 +26,6 @@ public class FilmDbStorage implements FilmStorage {
     protected final JdbcTemplate jdbc;
     protected final UserDbStorage userDbStorage;
     protected final FilmRowMapper mapper;
-    protected final GenreRowMapper genreMapper;
-    protected final MpaRowMapper mpaMapper;
     protected final MpaDbStorage mpaStorage;
     protected final GenreDbStorage genreStorage;
 
@@ -55,7 +50,6 @@ public class FilmDbStorage implements FilmStorage {
         Long mpaId = film.getMpa().getId();
         List<Genre> genres = film.getGenres();
         mpaStorage.get(mpaId);
-
         KeyHolder keyHolder = new GeneratedKeyHolder();
         jdbc.update(connection -> {
             PreparedStatement stmt = connection.prepareStatement(INSERT_QUERY, new String[]{"FILM_ID"});
@@ -68,27 +62,26 @@ public class FilmDbStorage implements FilmStorage {
         }, keyHolder);
         film.setId(keyHolder.getKey().longValue());
         film.setLikes(new HashSet<>());
-
-        film.setGenres(new ArrayList<>());
-        if (genres != null) {
+        if (genres != null && !genres.isEmpty()) {
             for (Genre genre : genres) {
-
-                Genre currentGenre = genreStorage.getGenre(genre.getId());
-                if (currentGenre != null) {
-                    film.getGenres().add(currentGenre);
-                    jdbc.update(connection -> {
-                        PreparedStatement stmt = connection.prepareStatement(INSERT_FILMS_GENRES_QUERY, new String[]{});
-                        stmt.setLong(1, film.getId());
-                        stmt.setLong(2, genre.getId());
-                        return stmt;
-                    });
-                }
+                genreStorage.getGenre(genre.getId());
             }
+            jdbc.batchUpdate(
+                    INSERT_FILMS_GENRES_QUERY,
+                    genres,
+                    genres.size(),
+                    (PreparedStatement ps, Genre genre) -> {
+                        ps.setLong(1, film.getId());
+                        ps.setLong(2, genre.getId());
+                    }
+            );
         }
+        film.setGenres(genres == null ? new ArrayList<>() : new ArrayList<>(new HashSet<>(genres)));
         film.setMpa(mpaStorage.get(mpaId));
 
         return film;
     }
+
 
     public void validate(Film film) {
         if (film.getReleaseDate().toLocalDate().isBefore(LocalDate.of(1895, 12, 28))) {
@@ -119,15 +112,13 @@ public class FilmDbStorage implements FilmStorage {
             List<Genre> updatedGenres = film.getGenres();
             film.setGenres(new ArrayList<>());
 
-            if (updatedGenres != null) {
+            if (updatedGenres != null && !updatedGenres.isEmpty()) {
+                List<Object[]> genreParams = new ArrayList<>();
                 for (Genre genre : updatedGenres) {
-                    jdbc.update(connection -> {
-                        PreparedStatement stmt = connection.prepareStatement(INSERT_FILMS_GENRES_QUERY, new String[]{});
-                        stmt.setLong(1, film.getId());
-                        stmt.setLong(2, genre.getId());
-                        return stmt;
-                    });
+                    genreParams.add(new Object[]{film.getId(), genre.getId()});
                 }
+                jdbc.batchUpdate(INSERT_FILMS_GENRES_QUERY, genreParams);
+
                 film.setGenres(updatedGenres);
             }
             return film;
@@ -135,6 +126,7 @@ public class FilmDbStorage implements FilmStorage {
             throw new NotFoundException("Такого фильма нет.");
         }
     }
+
 
     protected void updateFilm(Object... params) {
         int rowsUpdated = jdbc.update(UPDATE_QUERY, params);
@@ -145,26 +137,20 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public Film get(long id) {
-        try {
-            Film filmToReturn = jdbc.queryForObject(FIND_BY_ID_QUERY, mapper, id);
-
+        Film filmToReturn;
+            filmToReturn = jdbc.queryForObject(FIND_BY_ID_QUERY, mapper, id);
             Long mpaId = jdbc.queryForObject(FIND_MPA_QUERY, Long.class, id);
-            filmToReturn.setMpa(mpaStorage.get(mpaId));
-
-            List<Long> listOfGenresId = jdbc.queryForList(FIND_LIST_OF_GENRES_QUERY, Long.class, id);
-            List<Genre> listOfGenres = new ArrayList<>();
-
-            for (Long genreId : listOfGenresId) {
-                Genre currentGenre = genreStorage.getGenre(genreId);
-                if (!listOfGenres.contains(currentGenre)) {
-                    listOfGenres.add(currentGenre);
-                }
+            if (mpaId != null) {
+                filmToReturn.setMpa(mpaStorage.get(mpaId));
             }
-            filmToReturn.setGenres(listOfGenres);
-            return filmToReturn;
-        } catch (EmptyResultDataAccessException e) {
-            throw new NotFoundException("Такого фильма нет.");
-        }
+            List<Genre> listOfGenres = jdbc.query(FIND_LIST_OF_GENRES_QUERY,
+                    (rs, rowNum) -> genreStorage.getGenre(rs.getLong("genre_id")), id);
+            List<Genre> uniqueGenres = listOfGenres.stream()
+                    .distinct()
+                    .toList();
+
+            filmToReturn.setGenres(uniqueGenres);
+        return filmToReturn;
     }
 
     @Override

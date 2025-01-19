@@ -156,15 +156,15 @@ public class UserDbStorage implements UserStorage {
         }
 
         List<Long> listOfFriendsId = jdbc.queryForList(FIND_FRIENDS_QUERY, Long.class, id);
-        Collection<User> friends = new HashSet<>();
-        for (Long friendId : listOfFriendsId) {
-            User currentFriend = get(friendId);
-
-            if (!friends.contains(currentFriend)) {
-                friends.add(currentFriend);
-            }
+        if (listOfFriendsId.isEmpty()) {
+            return Collections.emptySet();
         }
-        return friends;
+        String inSql = String.join(",", Collections.nCopies(listOfFriendsId.size(), "?"));
+        String query = "SELECT * FROM USERS WHERE USER_ID IN (" + inSql + ")";
+
+        List<User> friends = jdbc.query(query, mapper, listOfFriendsId.toArray());
+
+        return new HashSet<>(friends);
     }
 
     @Override
