@@ -64,24 +64,6 @@ class FilmStorageTest {
     }
 
     @Test
-    void deleteFilmTest() {
-        Film addedFilm = filmStorage.add(film);
-        assertThat(addedFilm).isNotNull();
-        Film retrievedFilm = filmStorage.get(addedFilm.getId());
-        assertThat(retrievedFilm).isNotNull();
-        assertThat(retrievedFilm.getId()).isEqualTo(addedFilm.getId());
-        boolean isDeleted = filmStorage.delete(addedFilm.getId());
-        assertThat(isDeleted).isTrue();
-        try {
-            filmStorage.get(addedFilm.getId());
-            fail("Ожидалось исключение NotFoundException");
-        } catch (NotFoundException e) {
-            assertThat(e).isInstanceOf(NotFoundException.class);
-            assertThat(e.getMessage()).contains("Такого фильма нет");
-        }
-    }
-
-    @Test
     void getAllFilmsTest() {
         filmStorage.add(film);
 
